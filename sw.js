@@ -1,9 +1,9 @@
 // Bump VERSION whenever an application file changes, so the complete shell updates together.
-const VERSION='v0.2.0';
+const VERSION='v0.2.1';
 const SCOPE=new URL(self.registration.scope);
 const PREFIX=`catan-runde-${SCOPE.pathname}-`;
 const CACHE=PREFIX+VERSION;
-const FILES=['./','./index.html','./styles.css','./app.js','./model.js','./pwa.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
+const FILES=['./','./index.html','./styles.css','./app.js','./model.js','./pwa.js','./touch.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 const URLS=FILES.map(file=>new URL(file,SCOPE).href);
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(URLS)));

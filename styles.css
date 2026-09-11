@@ -4,3 +4,4 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
 .install-panel{max-width:1096px;margin:0 auto 28px;padding:16px 20px;border-top:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.install-panel small{flex-basis:100%;line-height:1.5;font-size:12px}.install-panel [hidden]{display:none}
+html,body{touch-action:pan-x pan-y}html.editing-field,html.editing-field body{touch-action:manipulation}button,a,select{touch-action:manipulation}input,textarea{font-size:16px!important;touch-action:manipulation}
