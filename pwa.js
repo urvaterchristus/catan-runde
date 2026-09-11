@@ -5,7 +5,7 @@ const help=document.querySelector('#install-help');
 let promptEvent=null,registration=null,reloading=false;
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 function installHint(){
-  if(standalone()){help.textContent='Als App geöffnet · Daten bleiben auf diesem Gerät.';install.hidden=true;return;}
+  if(standalone()){help.textContent='Als App geöffnet · Entwürfe sind auch offline verfügbar.';install.hidden=true;return;}
   help.textContent=/iPhone|iPad|iPod/.test(navigator.userAgent)?'Auf dem iPhone: In Safari öffnen → Teilen → Zum Home-Bildschirm.':'Auf dem Handy: Im Browsermenü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.';
 }
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();promptEvent=event;install.hidden=standalone();});

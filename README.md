@@ -1,19 +1,27 @@
 # Catan Runde
 
-Installierbarer Prototyp zur Erfassung von Catan-Partien.
+Private Spielrunde auf mehreren Handys: https://urvaterchristus.github.io/catan-runde/
 
-## Auf dem Handy
+## Gemeinsam spielen
+1. Auf jedem Handy die App öffnen und „Als Gast mitspielen“ wählen.
+2. Die Spielleitung erstellt eine Partie mit den Namen aller Spieler.
+3. „Spieler einladen“ öffnen und den Link mit den Mitspielern teilen.
+4. Jeder wählt seinen freien Platz und trägt nur seine eigenen Werte ein.
+5. Die Spielleitung prüft die Werte und bestätigt die Partie.
 
-Diese Webseite einmal mit Internet öffnen und auf die Offline-Bestätigung am Seitenende warten. Android: über das Browsermenü installieren. iPhone: in Safari öffnen, Teilen, Zum Home-Bildschirm.
+Gastzugänge bleiben auf demselben Browser gespeichert. Abmelden, Browserdaten löschen oder ein anderes Gerät verwenden erlaubt keine Wiederherstellung des Gastzugangs. Der Beitrittslink ist kein Wiederherstellungsschlüssel für bereits belegte Plätze.
 
-## Aktueller Stand
+Feste Konten: E-Mail-Link ist im Code vorbereitet, aber bis zur Einrichtung eines eigenen SMTP-Versands deaktiviert. Es wird kein Passwort benötigt.
 
-Spielerwechsel, lokale Partien, eigene Werte, Bonuskarten und Abschlusskontrolle sind enthalten. Der Rollenwechsel ist eine Demo, keine Anmeldung. Spielstände liegen ausschließlich im Browser des jeweiligen Geräts. Mehrere Handys synchronisieren noch nicht miteinander. Über die Exportfunktion lassen sich lokale Daten sichern.
+## Offline
+Nach dem ersten vollständigen Laden ist die App offline verfügbar. Bereits geladene Partien und eigene Entwürfe bleiben auf dem Gerät. Anmeldung, Einladungen und Bestätigung benötigen Internet. Abgeschlossene Offline-Eingaben werden beim nächsten Öffnen mit Internet bzw. beim Wiederverbinden übertragen. Bei widersprüchlichen Änderungen muss der Spieler den Serverstand prüfen und seinen Entwurf erneut freigeben.
 
-## GitHub Pages
+## Daten
+GitHub enthält den App-Code und einen öffentlichen Supabase-Projektschlüssel. Gemeinsame Partien liegen in Supabase. Zeilenzugriffsregeln beschränken das Lesen auf Teilnehmer. Änderungen laufen ausschließlich über geprüfte Datenbankfunktionen; Adminschlüssel und SMTP-Zugangsdaten gehören niemals ins Repository.
 
-Unter Settings → Pages die Veröffentlichung aus dem Branch main und dem Ordner / (root) aktivieren. Alle Dateien aus diesem Ordner müssen zusammen hochgeladen werden.
+## Installation
+Safari auf iPhone: Teilen → Zum Home-Bildschirm.
+Android: Browsermenü → App installieren / Zum Startbildschirm hinzufügen.
+Bei vorhandener Installation „Update laden“ verwenden.
 
-## Updates
-
-Bei Änderungen an HTML, CSS oder JavaScript die VERSION in sw.js erhöhen. Die App bietet ein verfügbares Update über „Update laden“ an.
+Version 0.3.2

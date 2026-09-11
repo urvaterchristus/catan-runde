@@ -113,7 +113,7 @@ dialog.addEventListener('submit',event=>{
   } catch(err){const box=document.querySelector('#new-errors');box.className='error-list';box.textContent=err.message;}
 });
 window.addEventListener('hashchange',()=>{if(location.hash==='#overview')navigate('overview');});
-for(const event of ['online','offline'])window.addEventListener(event,()=>{document.querySelectorAll('.connection').forEach(el=>{el.textContent=connection();el.classList.toggle('offline',!navigator.onLine);});toast(connection());});
+for(const event of ['online','offline'])window.addEventListener(event,()=>{if(location.hash!=='#local')return;document.querySelectorAll('.connection').forEach(el=>{el.textContent=connection();el.classList.toggle('offline',!navigator.onLine);});toast(connection());});
 function init(){
   const raw=localStorage.getItem(KEY);
   state=raw?JSON.parse(raw):makeDemo();
@@ -121,7 +121,7 @@ function init(){
   render();
   if(!raw){persist();if(saveError)render();}
   const context=document.modelContext;
-  if(context?.registerTool){
+  if(context?.registerTool&&location.hash==='#local'){
     const lifetime=new AbortController();
     const tools=[
       {name:'read_catan_round',description:'Read the active local demo round, players, submission status and points. No cloud data.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute:()=>({id:game().id,status:game().status,players:game().players.map(p=>({name:p.name,status:game().results[p.id].status,points:points(game(),p.id)}))})},
