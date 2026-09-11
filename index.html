@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#a53629">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Catan Runde">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <meta name="description" content="Catan-Spielrunde: gemeinsam Werte erfassen und eine Partie prüfen. Lokaler Prototyp.">
+  <title>Catan Runde · Spiel erfassen</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23a53629'/%3E%3Cpath d='M32 10 51 21v22L32 54 13 43V21Z' fill='none' stroke='%23f5c76a' stroke-width='4'/%3E%3Ctext x='32' y='41' font-size='28' font-family='sans-serif' text-anchor='middle' fill='white'%3EC%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Zum Inhalt</a>
+  <div id="app"></div>
+  <div id="install-panel" class="install-panel" aria-live="polite"><span id="offline-status">Offline-Verfügbarkeit wird geprüft …</span><button id="install-button" class="button small" hidden>App installieren</button><button id="update-button" class="button small" hidden>Update laden</button><small id="install-help"></small></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <dialog id="new-game" aria-labelledby="new-title"></dialog>
+  <script type="module" src="./app.js"></script>
+  <script type="module" src="./pwa.js"></script>
+</body>
+</html>
