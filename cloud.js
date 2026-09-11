@@ -45,4 +45,23 @@ export async function consumeCallback(){
   const recovery=hash.get('type')==='recovery';history.replaceState(null,'',location.pathname);return recovery;
 }
 export async function rpc(name,args){return response(await fetch(CLOUD_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+await token(),'Content-Type':'application/json'},body:JSON.stringify(args)}));}
-export async function loadGames(){return response(await fetch(CLOUD_URL+'/rest/v1/catan_games?select=*,catan_players(*)&order=created_at.desc',{headers:{apikey:KEY,Authorization:'Bearer '+await token()}}));}
+export async function refreshUser(){
+ const access=await token();
+ const user=await response(await fetch(CLOUD_URL+'/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+access}}));
+ saveSession({...session(),user});return user;
+}
+export async function linkEmail(email){
+ if(!EMAIL_READY)throw Error('Der E-Mail-Versand wird noch eingerichtet.');
+ if(!session()?.user?.is_anonymous)throw Error('Dieser Zugang ist bereits ein festes Konto.');
+ return response(await fetch(CLOUD_URL+'/auth/v1/user?redirect_to='+encodeURIComponent(HOME),{method:'PUT',headers:{apikey:KEY,Authorization:'Bearer '+await token(),'Content-Type':'application/json'},body:JSON.stringify({email})}));
+}
+export async function loadGames(){
+ const games=[],access=await token();let offset=0;
+ while(true){
+  const res=await fetch(CLOUD_URL+'/rest/v1/catan_games?select=*,catan_players(*)&order=played_on.desc,created_at.desc,id.desc&limit=100&offset='+offset,{headers:{apikey:KEY,Authorization:'Bearer '+access,Prefer:'count=exact'}});
+  const range=res.headers.get('content-range'),page=await response(res);games.push(...page);offset+=page.length;
+  const total=range&&range.split('/')[1]!=='*'?Number(range.split('/')[1]):null;
+  if(!page.length||(total!==null&&offset>=total))break;
+ }
+ return [...new Map(games.map(g=>[g.id,g])).values()];
+}

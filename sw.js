@@ -1,5 +1,5 @@
 // Bump VERSION whenever an application file changes, so the complete shell updates together.
-const VERSION='v0.3.2';
+const VERSION='v0.4.0';
 const SCOPE=new URL(self.registration.scope);
 const PREFIX=`catan-runde-${SCOPE.pathname}-`;
 const CACHE=PREFIX+VERSION;

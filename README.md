@@ -24,4 +24,8 @@ Safari auf iPhone: Teilen → Zum Home-Bildschirm.
 Android: Browsermenü → App installieren / Zum Startbildschirm hinzufügen.
 Bei vorhandener Installation „Update laden“ verwenden.
 
-Version 0.3.2
+Version 0.4.0
+
+## Persönliches Konto und Meine Spiele
+Die E-Mail-Anmeldung ist der vorgesehene Weg für feste Spieler: Beim ersten Anmeldelink entsteht das Konto, spätere Anmeldungen führen zum selben persönlichen Archiv. Der Mailversand ist noch nicht aktiv.
+„Meine Spiele“ listet alle eigenen Teilnahmen mit offenen und abgeschlossenen Partien, Mitspielern und eigenem Ergebnis. Namen allein gewähren keinen Zugriff. Vorhandene Gastzugänge können nach Aktivierung des Mailversands mit einer neuen E-Mail-Adresse verknüpft werden; bereits getrennte Konten werden nicht automatisch zusammengeführt.
