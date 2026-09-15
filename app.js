@@ -1,9 +1,12 @@
+import {sameGame,exportPCGames} from './exchange.js';
+import {importPCGames} from './legacy.js';
 import {statistics} from './statistics.js';
 import {FIELDS,makeDemo,createGame,today,updateResult,candidates,awardOwner,chooseAward,points,review,confirmGame,winners} from './model.js';
 
 const KEY='catan-runde-local-v1';
 const root=document.querySelector('#app');
 const dialog=document.querySelector('#new-game');
+let fileMode='import';
 let state,view='overview',toastTimer,saveError='';
 const e=(value)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const game=()=>state.games.find(g=>g.id===state.activeGameId);
@@ -31,13 +34,13 @@ function render(){
     <div class="select-game"><label for="game-select">Lokale Partien</label><select id="game-select">${state.games.map((x,i)=>`<option value="${e(x.id)}" ${x.id===g.id?'selected':''}>${i+1} · ${e(x.place||'Spielrunde')}${x.status==='confirmed'?' ✓':''}</option>`).join('')}</select></div>
     <div class="sidebar-note"><strong>Alles an einem Tisch.</strong>Werte eingeben, Eingabe abschließen und gemeinsam prüfen.<div class="connection ${navigator.onLine?'':'offline'}">${connection()}</div><button class="muted-link" data-action="export">Lokale Daten exportieren</button></div></aside>
     <main id="main" tabindex="-1">${saveError?`<div class="error-list" role="alert">${e(saveError)}</div>`:''}${view==='stats'?statsView():view==='overview'?overview(g,p):view==='entry'?entry(g,p):reviewView(g,p,host)}</main></div>
-    <footer class="footer"><span>Auf diesem Handy · Version 0.5</span><span><button class="muted-link" data-action="export">Sicherung exportieren ↓</button> <button class="muted-link" data-action="import">Sicherung importieren</button></span></footer></div>`;
+    <footer class="footer"><span>Auf diesem Handy · Version 0.6</span><span><button class="muted-link" data-action="export">Sicherung exportieren ↓</button> <button class="muted-link" data-action="import">JSON / PC-Spiele importieren</button> <button class="muted-link" data-action="sync">OneDrive-Datei abgleichen</button> <button class="muted-link" data-action="pc-export">Abgleichdatei speichern</button></span></footer></div>`;
 }
-function renderEmpty(){root.innerHTML=`<main class="shell" id="main" tabindex="-1"><section class="panel"><p class="eyebrow">Catan Runde · Auf deinem Handy</p><h1>${view==='stats'?'Statistiken':'Dein Spieleabend'}</h1><p>Erstelle eine Partie und trage die Werte für alle Spieler ein. Ohne Anmeldung, auch offline.</p><div class="actions"><button class="button primary" data-action="new">Neue Partie</button><button class="button" data-view="stats">Statistiken</button><button class="button" data-action="import">Sicherung importieren</button></div><p class="subtle">Deine Spiele bleiben auf diesem Gerät. Exportiere regelmäßig eine Sicherung, damit du sie bei einem Handywechsel wieder importieren kannst.</p></section>${view==='stats'?statsView():''}</main>`;}
+function renderEmpty(){root.innerHTML=`<main class="shell" id="main" tabindex="-1"><section class="panel"><p class="eyebrow">Catan Runde · Auf deinem Handy</p><h1>${view==='stats'?'Statistiken':'Dein Spieleabend'}</h1><p>Erstelle eine Partie und trage die Werte für alle Spieler ein. Ohne Anmeldung, auch offline.</p><div class="actions"><button class="button primary" data-action="new">Neue Partie</button><button class="button" data-view="stats">Statistiken</button><button class="button" data-action="import">JSON / PC-Spiele importieren</button></div><p class="subtle">Deine Spiele bleiben auf diesem Gerät. Exportiere regelmäßig eine Sicherung, damit du sie bei einem Handywechsel wieder importieren kannst.</p></section>${view==='stats'?statsView():''}</main>`;}
 function statsView(){const s=statistics(state.games);return `<section class="panel"><p class="eyebrow">Deine Spielstatistik</p><h2>${s.games} ${s.games===1?'abgeschlossene Partie':'abgeschlossene Partien'}</h2><p class="subtle">Offene Partien zählen noch nicht. Spieler werden anhand ihres Namens zusammengefasst (Groß-/Kleinschreibung wird ignoriert). Verwende für dieselbe Person immer denselben Namen.</p>${s.players.length?`<div style="overflow-x:auto"><table class="review-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Siege</th><th>Siegquote</th><th>Ø SP</th><th>Beste SP</th></tr></thead><tbody>${s.players.map(p=>`<tr><td>${e(p.name)}</td><td>${p.games}</td><td>${p.wins}</td><td>${Math.round(100*p.wins/p.games)} %</td><td>${(p.total/p.games).toLocaleString('de-DE',{maximumFractionDigits:1})}</td><td>${p.best}</td></tr>`).join('')}</tbody></table></div><p class="subtle">Bei einem geteilten Höchststand erhält jeder beteiligte Spieler einen Sieg. Es zählen die bestätigten Endstände.</p>`:'<p>Nach deiner ersten abgeschlossenen Partie erscheinen hier Spiele, Siege, Siegquote und Siegpunkte je Spieler.</p>'}</section>`;}
 function overview(g,p){
   const done=submitted(g),closed=g.status==='confirmed';
-  return `${banner(g)}${closed?`<div class="notice success">Die Partie ist bestätigt. Alle Eingaben sind gesperrt.</div>`:''}<section class="panel" aria-labelledby="round-title"><div class="panel-header"><h2 id="round-title">Am Tisch</h2><span class="chip ${done===g.players.length?'green':'gold'}">${done} von ${g.players.length} fertig</span></div><p class="subtle">${closed?'Euer Ergebnis steht fest.':'Für welche Spieler sind die Werte schon vollständig?'}</p><div class="progress-track" role="progressbar" aria-label="Abgeschlossene Eingaben" aria-valuenow="${done}" aria-valuemin="0" aria-valuemax="${g.players.length}"><div class="progress-fill" style="width:${done/g.players.length*100}%"></div></div>
+  return `${banner(g)}${closed?`<div class="notice success">Die Partie ist bestätigt. Alle Eingaben sind gesperrt.${g.legacy?' Importiert aus dem PC-Programm; ursprüngliche Punkte und Sieger bleiben erhalten.':''}</div>`:''}<section class="panel" aria-labelledby="round-title"><div class="panel-header"><h2 id="round-title">Am Tisch</h2><span class="chip ${done===g.players.length?'green':'gold'}">${done} von ${g.players.length} fertig</span></div><p class="subtle">${closed?'Euer Ergebnis steht fest.':'Für welche Spieler sind die Werte schon vollständig?'}</p><div class="progress-track" role="progressbar" aria-label="Abgeschlossene Eingaben" aria-valuenow="${done}" aria-valuemin="0" aria-valuemax="${g.players.length}"><div class="progress-fill" style="width:${done/g.players.length*100}%"></div></div>
     <div class="players">${g.players.map(x=>`<div class="player-row">${avatar(x)}<div class="player-info"><div class="player-name">${e(x.name)}</div><div class="player-role">${[x.id===g.hostId?'Spielleitung':'',x.id===g.startPlayerId?'Startspieler':''].filter(Boolean).join(' · ')||'Mitspieler'}</div></div><button class="button small" data-player="${e(x.id)}">${g.results[x.id].status==='submitted'?'Werte ansehen':'Werte eintragen'}</button></div>`).join('')}</div>
     <div class="panel-footer"><p class="subtle">${closed?'Gespeichert auf diesem Gerät.':g.results[p.id].status==='submitted'?'Eingabe gespeichert. Wähle den nächsten Spieler. Bis zur Bestätigung kannst du sie bearbeiten.':'Wähle einen Spieler und erfasse dessen Endstand.'}</p><button class="button primary" data-view="${closed?'review':'entry'}">${closed?'Ergebnis ansehen':g.results[p.id].status==='submitted'?'Spielerwerte ansehen':'Spielerwerte eintragen'} <span aria-hidden="true">→</span></button></div></section>
     <section class="panel"><div class="panel-header"><h2>So geht’s weiter</h2></div><p class="subtle">${closed?'Du kannst jetzt eine neue Partie anlegen oder das Ergebnis ansehen.':true?'Sobald alle fertig sind, prüfst du die Bonuskarten und Siegpunkte. Danach kannst du die Partie bestätigen.':'Sobald alle fertig sind, prüft die Spielleitung die Bonuskarten und bestätigt die Partie.'}</p>${!closed?'<button class="muted-link" data-view="review">Zur Abschlusskontrolle →</button>':''}${g.rules||g.tags||g.notes?`<details><summary>Angaben zur Partie</summary><p class="subtle">${e([g.rules,g.tags,g.notes].filter(Boolean).join(' · '))}</p></details>`:''}</section>
@@ -80,12 +83,23 @@ function saveDraft(){
   document.querySelector('#entry-form button[type="submit"]').textContent='Eingabe abschließen ✓';
   document.querySelector('#entry-errors').innerHTML='';
 }
+function chooseVersion(local,remote){return new Promise(resolve=>{
+ const describe=g=>g.players.map(p=>`${p.name}: ${g.results[p.id].values.finale_siegpunkte} SP`).join(' · ');
+ dialog.innerHTML=`<form id="merge-form"><h2>Unterschiedliche Spielstände</h2><p>${e(local.date)} · ${e(local.place)}</p><label class="field">Welche Version soll gelten?<select name="version" required><option value="">Bitte auswählen</option><option value="local">Stand auf diesem Handy behalten</option><option value="remote">Stand aus der ausgewählten Datei übernehmen</option></select></label><h3>Auf diesem Handy</h3><p>${e(describe(local))}</p><details><summary>Alle Daten auf dem Handy</summary><pre style="white-space:pre-wrap">${e(JSON.stringify(local,null,2))}</pre></details><h3>Aus der Datei</h3><p>${e(describe(remote))}</p><details><summary>Alle Daten aus der Datei</summary><pre style="white-space:pre-wrap">${e(JSON.stringify(remote,null,2))}</pre></details><div class="actions"><button class="button primary" type="submit">Auswahl übernehmen</button><button class="button" type="button" id="merge-cancel">Gesamten Abgleich abbrechen</button></div></form>`;
+ const finish=value=>{dialog.removeEventListener('submit',submit);dialog.removeEventListener('cancel',cancel);dialog.close();resolve(value);};
+ const submit=event=>{if(event.target.id!=='merge-form')return;event.preventDefault();finish(new FormData(event.target).get('version'));};
+ const cancel=event=>{event.preventDefault();finish(null);};
+ dialog.addEventListener('submit',submit);dialog.addEventListener('cancel',cancel);dialog.querySelector('#merge-cancel').onclick=()=>finish(null);dialog.showModal();
+});}
+function exportExchange(){try{const data=exportPCGames(state.games);if(!data.length)throw Error('Noch keine abgeschlossenen Partien vorhanden.');const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='catan_abgleich.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Abgleichdatei speichern und in OneDrive ablegen. Erst danach ist sie auf dem PC verfügbar.');}catch(err){toast(err.message);}}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`catan-sicherung-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Lokale Daten als JSON exportiert.');}
 root.addEventListener('click',event=>{
   const b=event.target.closest('button');if(!b||b.disabled)return;
   try {
     if(b.dataset.player){state.actorId=b.dataset.player;persist();navigate('entry');return;}
-    if(b.dataset.action==='import'){document.querySelector('#backup-file').click();return;}
+    if(b.dataset.action==='sync'){fileMode='sync';document.querySelector('#backup-file').click();return;}
+    if(b.dataset.action==='pc-export'){exportExchange();return;}
+    if(b.dataset.action==='import'){fileMode='import';document.querySelector('#backup-file').click();return;}
     if(b.dataset.view){navigate(b.dataset.view);return;}
     if(b.dataset.game){state.activeGameId=b.dataset.game;state.actorId=game().hostId;persist();navigate('overview');return;}
     if(b.dataset.step){const input=document.querySelector(`[name="${b.dataset.field}"]`);input.value=String(Math.max(0,Math.min(Number(input.max),Number(input.value)+Number(b.dataset.step))));saveDraft();return;}
@@ -108,6 +122,7 @@ root.addEventListener('submit',event=>{
 });
 dialog.addEventListener('click',event=>{if(event.target.closest('[data-action="cancel-new"]'))dialog.close();});
 dialog.addEventListener('submit',event=>{
+  if(event.target.id!=='new-form')return;
   event.preventDefault();const data=new FormData(event.target);
   try {
     const slots=[1,2,3,4].map(n=>String(data.get(`p${n}`)).trim());
@@ -124,12 +139,14 @@ document.querySelector('#backup-file')?.addEventListener('change',async event=>{
  const file=event.target.files[0];if(!file)return;
  try{
   if(file.size>5*1024*1024)throw Error('Die Sicherung ist zu groß (maximal 5 MB).');
-  const data=JSON.parse(await file.text());
+  let data=JSON.parse((await file.text()).replace(/^\uFEFF/,''));
+  if(Array.isArray(data))data=await importPCGames(data);
   if(data.schemaVersion!==1||!Array.isArray(data.games))throw Error('Keine gültige Catan-Sicherung.');
-  const incoming=[];const ids=new Set(state.games.map(g=>g.id));
+  const incoming=[],replacements=new Map();const ids=new Set(state.games.map(g=>g.id));
   for(const g of data.games){
    if(!g||typeof g.id!=='string'||!Array.isArray(g.players)||!['open','confirmed'].includes(g.status))throw Error('Ungültige Partie in der Sicherung.');
-   createGame({names:g.players.map(p=>p.name),date:g.date});
+   if(g.legacy?.source==='catan-pc'){const verified=(await importPCGames([g.legacy.raw])).games[0];if(JSON.stringify(verified)!==JSON.stringify(g))throw Error('Die importierte PC-Partie wurde verändert. Bitte die Originaldatei verwenden.');}
+   else createGame({names:g.players.map(p=>p.name),date:g.date});
    const ps=new Set(g.players.map(p=>p.id));
    if(ps.size!==g.players.length||!ps.has(g.hostId)||!ps.has(g.startPlayerId))throw Error('Ungültige Spielerzuordnung.');
    for(const p of g.players){
@@ -137,12 +154,17 @@ document.querySelector('#backup-file')?.addEventListener('change',async event=>{
     for(const [k,,max] of FIELDS)if(r.values?.[k]!==null&&(!Number.isInteger(r.values?.[k])||r.values[k]<0||r.values[k]>max))throw Error('Ungültige Spielerwerte.');
    }
    if(!g.awards||!['road','army'].every(k=>g.awards[k]===null||ps.has(g.awards[k])))throw Error('Ungültige Bonuskarten.');
-   if(g.status==='confirmed'&&review(g).blockers.length)throw Error('Abgeschlossene Partie enthält unvollständige Werte.');
-   if(ids.has(g.id)){if(JSON.stringify(state.games.find(x=>x.id===g.id))!==JSON.stringify(g))throw Error('Eine Partie existiert bereits mit anderem Stand. Es wurde nichts importiert.');continue;}
+   if(!g.legacy&&g.status==='confirmed'&&review(g).blockers.length)throw Error('Abgeschlossene Partie enthält unvollständige Werte.');
+   if(ids.has(g.id)){
+    const old=state.games.find(x=>x.id===g.id);if(!old)throw Error('Doppelte Partie in der Datei.');
+    const equal=(g.status==='confirmed'&&old.status==='confirmed')?sameGame(old,g):JSON.stringify(old)===JSON.stringify(g);
+    if(!equal){const choice=await chooseVersion(old,g);if(choice==='remote')replacements.set(g.id,g);else if(choice!=='local')throw Error('Abgleich abgebrochen. Es wurde nichts geändert.');}continue;
+   }
    ids.add(g.id);incoming.push(g);
   }
-  const next={...state,games:[...state.games,...incoming]};if(!next.activeGameId&&incoming.length){next.activeGameId=incoming[0].id;next.actorId=incoming[0].hostId;}
-  localStorage.setItem(KEY,JSON.stringify(next));state=next;render();toast(`${incoming.length} Partien importiert.`);
+  const next={...state,games:[...state.games.map(g=>replacements.get(g.id)||g),...incoming]};if(!next.activeGameId&&incoming.length){next.activeGameId=incoming[0].id;next.actorId=incoming[0].hostId;}
+  if(fileMode==='sync')localStorage.setItem(KEY+'-vor-abgleich',JSON.stringify(state));
+  localStorage.setItem(KEY,JSON.stringify(next));state=next;render();toast(fileMode==='sync'?`${incoming.length} Partien übernommen. Jetzt „Abgleichdatei speichern“ wählen und die Datei wieder in OneDrive ablegen.`:`${incoming.length} Partien importiert.`);
  }catch(err){toast('Import fehlgeschlagen: '+err.message);}finally{event.target.value='';}
 });
 function init(){

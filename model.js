@@ -62,6 +62,7 @@ export function candidates(g,kind) {
   return max<threshold?[]:g.players.filter(p=>g.results[p.id].values[key]===max);
 }
 export function awardOwner(g,kind) {
+  if(g.legacy?.source==='catan-pc')return g.awards[kind];
   const list=candidates(g,kind);
   return list.length===1?list[0].id:list.some(p=>p.id===g.awards[kind])?g.awards[kind]:null;
 }
@@ -72,6 +73,7 @@ export function chooseAward(g,actorId,kind,playerId) {
   g.awards[kind]=playerId;
 }
 export function points(g,id) {
+  if(g.legacy?.source==='catan-pc')return g.legacy.points[id];
   const v=g.results[id].values;
   return v.siedlungen+2*v.staedte+v.sp_entwicklung+(awardOwner(g,'road')===id?2:0)+(awardOwner(g,'army')===id?2:0);
 }
@@ -94,6 +96,7 @@ export function confirmGame(g,actorId,acceptMismatch=false) {
   g.status='confirmed';g.confirmedAt=new Date().toISOString();g.mismatchAccepted=r.mismatches.length>0;
 }
 export function winners(g) {
+  if(g.legacy?.source==='catan-pc')return g.players.filter(p=>g.legacy.winnerIds.includes(p.id));
   const max=Math.max(...g.players.map(p=>g.results[p.id].values.finale_siegpunkte));
   return g.players.filter(p=>g.results[p.id].values.finale_siegpunkte===max);
 }
