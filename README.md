@@ -25,7 +25,7 @@ Importierte PC-Partien behalten Originalfelder, gespeicherte Sieger und berechne
 
 OneDrive-Synchronisierung ist noch nicht aktiv. Die Einrichtung der Microsoft-App-Verbindung ist durch fehlenden Zugriff auf die App-Verwaltung des Uni-Kontos blockiert. Dateiimport ist eine lokale Übernahme, kein automatischer Abgleich mit dem PC.
 
-## Manueller OneDrive-Dateiabgleich (Version 0.6.1)
+## Manueller OneDrive-Dateiabgleich (Version 0.6.2)
 Die direkte Microsoft-Verbindung ist nicht aktiviert. Stattdessen:
 1. Am PC die vorbereitete PC-Version benutzen, „Dateiabgleich“ wählen und catan_abgleich.json im gewünschten OneDrive-Ordner anlegen/auswählen. Nicht dieselbe Datei wie catan_spielstaende.json auswählen.
 2. Warten, bis OneDrive den Upload abgeschlossen hat.
@@ -33,5 +33,5 @@ Die direkte Microsoft-Verbindung ist nicht aktiviert. Stattdessen:
 4. Anschließend „Abgleichdatei speichern“, die Datei über „In Dateien sichern“ wieder im selben OneDrive-Ordner als catan_abgleich.json speichern und die bisherige Abgleichdatei ersetzen. Vorherige Sicherungen aufbewahren.
 5. Nach abgeschlossenem OneDrive-Upload am PC erneut „Dateiabgleich“ durchführen. Neue Spiele von beiden Seiten sind danach zusammengeführt.
 
-Nur abgeschlossene Partien werden übertragen. Änderungen derselben Partie verlangen eine bewusste Versionsauswahl. Löschungen werden in dieser Version nicht verteilt; fehlende Spiele bleiben beim Zusammenführen erhalten. Während des Abgleichs nicht gleichzeitig auf dem anderen Gerät bearbeiten. Immer die aktuelle Datei abgleichen, bevor eine neue Abgleichdatei exportiert wird. Der Browser kann nicht prüfen, ob du die heruntergeladene Datei tatsächlich in OneDrive gespeichert hast.
+Nur abgeschlossene Partien werden übertragen. Änderungen derselben Partie verlangen eine bewusste Versionsauswahl. Löschungen werden ausschließlich im PC-Programm ausgelöst und als Löschkennungen beim Dateiabgleich übertragen. Alte Abgleichdateien können gelöschte Partien nicht wieder hinzufügen. Die PC-Version 0.6.2 und ihre separate .deletions.json-Datei sind dafür erforderlich. Abgleichdateien verwenden jetzt das Format catan-exchange-v2; alte reine Spielelisten können weiterhin eingelesen werden. Während des Abgleichs nicht gleichzeitig auf dem anderen Gerät bearbeiten. Immer die aktuelle Datei abgleichen, bevor eine neue Abgleichdatei exportiert wird. Der Browser kann nicht prüfen, ob du die heruntergeladene Datei tatsächlich in OneDrive gespeichert hast.
 Die neue PC-Version muss nach dem ersten Abgleich die bisherige Version für weitere Bearbeitung ersetzen, damit dauerhafte Spielkennungen bei Änderungen erhalten bleiben.

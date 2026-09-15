@@ -1,4 +1,9 @@
 import {FIELDS,points,winners,awardOwner} from './model.js';
+export function deletionIds(...lists){
+ for(const list of lists)if(!Array.isArray(list)||list.some(id=>typeof id!=='string'||!/^[-a-zA-Z0-9_]{1,100}$/.test(id)))throw Error('Ungültige Löschkennungen.');
+ return [...new Set(lists.flat())].sort();
+}
+export function exportExchangeData(state){const deletedIds=deletionIds(state.deletedIds||[]);return {format:'catan-exchange-v2',deletedIds,games:exportPCGames(state.games.filter(g=>!deletedIds.includes(g.id)))};}
 export function toPCGame(g){
  if(g.status!=='confirmed')throw Error('Nur abgeschlossene Partien werden abgeglichen.');
  if(g.legacy?.source==='catan-pc')return {...structuredClone(g.legacy.raw),_catan_id:g.id};

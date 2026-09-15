@@ -1,4 +1,4 @@
-import {sameGame,exportPCGames} from './exchange.js';
+import {sameGame,exportExchangeData,deletionIds} from './exchange.js';
 import {importPCGames} from './legacy.js';
 import {statistics} from './statistics.js';
 import {FIELDS,makeDemo,createGame,today,updateResult,candidates,awardOwner,chooseAward,points,review,confirmGame,winners} from './model.js';
@@ -34,7 +34,7 @@ function render(){
     <div class="select-game"><label for="game-select">Lokale Partien</label><select id="game-select">${state.games.map((x,i)=>`<option value="${e(x.id)}" ${x.id===g.id?'selected':''}>${i+1} · ${e(x.place||'Spielrunde')}${x.status==='confirmed'?' ✓':''}</option>`).join('')}</select></div>
     <div class="sidebar-note"><strong>Alles an einem Tisch.</strong>Werte eingeben, Eingabe abschließen und gemeinsam prüfen.<div class="connection ${navigator.onLine?'':'offline'}">${connection()}</div><button class="muted-link" data-action="export">Lokale Daten exportieren</button></div></aside>
     <main id="main" tabindex="-1">${saveError?`<div class="error-list" role="alert">${e(saveError)}</div>`:''}${view==='stats'?statsView():view==='overview'?overview(g,p):view==='entry'?entry(g,p):reviewView(g,p,host)}</main></div>
-    <footer class="footer"><span>Auf diesem Handy · Version 0.6</span><span><button class="muted-link" data-action="export">Sicherung exportieren ↓</button> <button class="muted-link" data-action="import">JSON / PC-Spiele importieren</button> <button class="muted-link" data-action="sync">OneDrive-Datei abgleichen</button> <button class="muted-link" data-action="pc-export">Abgleichdatei speichern</button></span></footer></div>`;
+    <footer class="footer"><span>Auf diesem Handy · Version 0.6.2</span><span><button class="muted-link" data-action="export">Sicherung exportieren ↓</button> <button class="muted-link" data-action="import">JSON / PC-Spiele importieren</button> <button class="muted-link" data-action="sync">OneDrive-Datei abgleichen</button> <button class="muted-link" data-action="pc-export">Abgleichdatei speichern</button></span></footer></div>`;
 }
 function renderEmpty(){root.innerHTML=`<main class="shell" id="main" tabindex="-1"><section class="panel"><p class="eyebrow">Catan Runde · Auf deinem Handy</p><h1>${view==='stats'?'Statistiken':'Dein Spieleabend'}</h1><p>Erstelle eine Partie und trage die Werte für alle Spieler ein. Ohne Anmeldung, auch offline.</p><div class="actions"><button class="button primary" data-action="new">Neue Partie</button><button class="button" data-view="stats">Statistiken</button><button class="button" data-action="import">JSON / PC-Spiele importieren</button></div><p class="subtle">Deine Spiele bleiben auf diesem Gerät. Exportiere regelmäßig eine Sicherung, damit du sie bei einem Handywechsel wieder importieren kannst.</p></section>${view==='stats'?statsView():''}</main>`;}
 function statsView(){const s=statistics(state.games);return `<section class="panel"><p class="eyebrow">Deine Spielstatistik</p><h2>${s.games} ${s.games===1?'abgeschlossene Partie':'abgeschlossene Partien'}</h2><p class="subtle">Offene Partien zählen noch nicht. Spieler werden anhand ihres Namens zusammengefasst (Groß-/Kleinschreibung wird ignoriert). Verwende für dieselbe Person immer denselben Namen.</p>${s.players.length?`<div style="overflow-x:auto"><table class="review-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Siege</th><th>Siegquote</th><th>Ø SP</th><th>Beste SP</th></tr></thead><tbody>${s.players.map(p=>`<tr><td>${e(p.name)}</td><td>${p.games}</td><td>${p.wins}</td><td>${Math.round(100*p.wins/p.games)} %</td><td>${(p.total/p.games).toLocaleString('de-DE',{maximumFractionDigits:1})}</td><td>${p.best}</td></tr>`).join('')}</tbody></table></div><p class="subtle">Bei einem geteilten Höchststand erhält jeder beteiligte Spieler einen Sieg. Es zählen die bestätigten Endstände.</p>`:'<p>Nach deiner ersten abgeschlossenen Partie erscheinen hier Spiele, Siege, Siegquote und Siegpunkte je Spieler.</p>'}</section>`;}
@@ -91,7 +91,7 @@ function chooseVersion(local,remote){return new Promise(resolve=>{
  const cancel=event=>{event.preventDefault();finish(null);};
  dialog.addEventListener('submit',submit);dialog.addEventListener('cancel',cancel);dialog.querySelector('#merge-cancel').onclick=()=>finish(null);dialog.showModal();
 });}
-function exportExchange(){try{const data=exportPCGames(state.games);if(!data.length)throw Error('Noch keine abgeschlossenen Partien vorhanden.');const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='catan_abgleich.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Abgleichdatei speichern und in OneDrive ablegen. Erst danach ist sie auf dem PC verfügbar.');}catch(err){toast(err.message);}}
+function exportExchange(){try{const data=exportExchangeData(state);if(!data.games.length&&!data.deletedIds.length)throw Error('Noch keine abgeschlossenen Partien vorhanden.');const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='catan_abgleich.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Abgleichdatei speichern und in OneDrive ablegen. Erst danach ist sie auf dem PC verfügbar.');}catch(err){toast(err.message);}}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`catan-sicherung-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Lokale Daten als JSON exportiert.');}
 root.addEventListener('click',event=>{
   const b=event.target.closest('button');if(!b||b.disabled)return;
@@ -140,8 +140,10 @@ document.querySelector('#backup-file')?.addEventListener('change',async event=>{
  try{
   if(file.size>5*1024*1024)throw Error('Die Sicherung ist zu groß (maximal 5 MB).');
   let data=JSON.parse((await file.text()).replace(/^\uFEFF/,''));
+  if(data?.format==='catan-exchange-v2'){const removed=deletionIds(data.deletedIds);data={...await importPCGames(data.games),deletedIds:removed};}
   if(Array.isArray(data))data=await importPCGames(data);
   if(data.schemaVersion!==1||!Array.isArray(data.games))throw Error('Keine gültige Catan-Sicherung.');
+  const removed=deletionIds(state.deletedIds||[],data.deletedIds||[]);
   const incoming=[],replacements=new Map();const ids=new Set(state.games.map(g=>g.id));
   for(const g of data.games){
    if(!g||typeof g.id!=='string'||!Array.isArray(g.players)||!['open','confirmed'].includes(g.status))throw Error('Ungültige Partie in der Sicherung.');
@@ -155,6 +157,7 @@ document.querySelector('#backup-file')?.addEventListener('change',async event=>{
    }
    if(!g.awards||!['road','army'].every(k=>g.awards[k]===null||ps.has(g.awards[k])))throw Error('Ungültige Bonuskarten.');
    if(!g.legacy&&g.status==='confirmed'&&review(g).blockers.length)throw Error('Abgeschlossene Partie enthält unvollständige Werte.');
+   if(removed.includes(g.id))continue;
    if(ids.has(g.id)){
     const old=state.games.find(x=>x.id===g.id);if(!old)throw Error('Doppelte Partie in der Datei.');
     const equal=(g.status==='confirmed'&&old.status==='confirmed')?sameGame(old,g):JSON.stringify(old)===JSON.stringify(g);
@@ -162,8 +165,8 @@ document.querySelector('#backup-file')?.addEventListener('change',async event=>{
    }
    ids.add(g.id);incoming.push(g);
   }
-  const next={...state,games:[...state.games.map(g=>replacements.get(g.id)||g),...incoming]};if(!next.activeGameId&&incoming.length){next.activeGameId=incoming[0].id;next.actorId=incoming[0].hostId;}
-  if(fileMode==='sync')localStorage.setItem(KEY+'-vor-abgleich',JSON.stringify(state));
+  const next={...state,deletedIds:removed,games:[...state.games.filter(g=>!removed.includes(g.id)).map(g=>replacements.get(g.id)||g),...incoming]};if(!next.games.some(g=>g.id===next.activeGameId)){next.activeGameId=next.games[0]?.id||null;next.actorId=next.games[0]?.hostId||null;view="overview";}
+  if(fileMode==='sync'||removed.length)localStorage.setItem(KEY+'-vor-abgleich',JSON.stringify(state));
   localStorage.setItem(KEY,JSON.stringify(next));state=next;render();toast(fileMode==='sync'?`${incoming.length} Partien übernommen. Jetzt „Abgleichdatei speichern“ wählen und die Datei wieder in OneDrive ablegen.`:`${incoming.length} Partien importiert.`);
  }catch(err){toast('Import fehlgeschlagen: '+err.message);}finally{event.target.value='';}
 });
